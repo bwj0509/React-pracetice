@@ -1,91 +1,70 @@
-import React from "react";
-import Hello from "./Hello";
-import Wrapper from "./Wrapper";
-import Counter from "./Counter";
-import UserList from "./UserList";
+import React, {useRef, useState} from "react";
 import CreateUser from "./CreateUser";
-import './App.css';
-import { useRef, useState } from "react";
+import UserList from "./UserList";
 
 function App(){
-
-  const [inputs, setInput] = useState({
+  
+  const [inputs, setInputs] = useState({
     username:'',
-    email:'',
+    email:''
   })
+  const {username, email} = inputs // 위에 useState 객체를 구조분해할당 함
 
-  const {username, email} = inputs;
+  const firstFocus = useRef()
 
   const onChange = (e) =>{
-    const {name, value} = e.target
-    console.log(name, value)
-    setInput({
-        ...inputs,
-        [name]:value
+    const {name, value} = e.target;
+    setInputs({
+      ...inputs,
+      [name]:value
     })
-
-}
-
-  const onReset = () =>{
-      setInput({
-          name:'',
-          nickname:''
-      })
-
   }
 
   const [users, setUsers] = useState([
     {
-        id:1,
-        username:'velopert',
-        email:'public.velopert@gmail.com'
+      id: 1,
+      username: 'velopert',
+      email: 'public.velopert@gmail.com'
     },
     {
-        id: 2,
-        username: 'tester',
-        email: 'tester@example.com'
+      id: 2,
+      username: 'tester',
+      email: 'tester@example.com'
     },
     {
-        id: 3,
-        username: 'liz',
-        email: 'liz@example.com'
+      id: 3,
+      username: 'liz',
+      email: 'liz@example.com'
     }
-])
+  ])
 
+  
 
   const nextId = useRef(4);
 
-  const onCreate = (e) =>{
-    const user = {
-      id: nextId.current,
-      username,
-      email
-    };
-    setUsers([...users, user])
-
-    setInput({
+  const onCreate = () =>{
+    console.log('작동')
+    setUsers([
+      ...users,
+      {
+        id:nextId.current,
+        username : username,
+        email : email
+      }
+    ])
+    nextId.current +=1;
+    setInputs({
       username:'',
       email:''
     })
-    nextId.current +=1
+    
+    firstFocus.current.focus()
   }
-
-  console.log(users)
 
   return(
     <>
-    <CreateUser
-      username={username}
-      email={email}
-      onChange={onChange}
-      onCreate={onCreate}
-    />
-    <UserList users={users} />
-  </>
-    
-    
-    
+    <CreateUser username={username} email={email} onChange={onChange} onCreate={onCreate} firstFocus={firstFocus} />
+    <UserList users={users}/>
+    </>
   )
-}
-
-export default App;
+}export default App;

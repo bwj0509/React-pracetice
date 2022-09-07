@@ -10,7 +10,6 @@ function User({user}){
 
 
 function UserList({users}){
-    
 
     return(
         <>
