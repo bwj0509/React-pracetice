@@ -1,70 +1,118 @@
-import React, {useRef, useState} from "react";
+import React, {useRef, useState, useMemo, useReducer} from "react";
 import CreateUser from "./CreateUser";
 import UserList from "./UserList";
 
-function App(){
-  
-  const [inputs, setInputs] = useState({
+function countActiveUsers(users){
+  console.log('활성 사용자 수를 세는중...')
+  return users.filter(user => user.active === true).length;
+}
+
+const initialState = {
+  inputs:{
     username:'',
     email:''
-  })
-  const {username, email} = inputs // 위에 useState 객체를 구조분해할당 함
-
-  const firstFocus = useRef()
-
-  const onChange = (e) =>{
-    const {name, value} = e.target;
-    setInputs({
-      ...inputs,
-      [name]:value
-    })
-  }
-
-  const [users, setUsers] = useState([
+  },
+  users:[
     {
       id: 1,
       username: 'velopert',
-      email: 'public.velopert@gmail.com'
+      email: 'public.velopert@gmail.com',
+      active: true
     },
     {
       id: 2,
       username: 'tester',
-      email: 'tester@example.com'
+      email: 'tester@example.com',
+      active: false
     },
     {
       id: 3,
       username: 'liz',
-      email: 'liz@example.com'
+      email: 'liz@example.com',
+      active: false
     }
-  ])
+  ]
+}
 
-  
-
-  const nextId = useRef(4);
-
-  const onCreate = () =>{
-    console.log('작동')
-    setUsers([
-      ...users,
-      {
-        id:nextId.current,
-        username : username,
-        email : email
+function reducer(state, action){
+  switch(action.type){
+    case 'CHANGE_INPUT':
+      return{
+        ...state,
+        inputs:{
+          ...state.inputs,
+          [action.name]:action.value
+        }
+      };
+    case 'CREATE_USER':
+      return{
+        ...state,
+        users:[
+          ...state.users,
+          {
+            id:action.nextId,
+            username:action.username,
+            email:action.email,
+            active:false
+          }
+        ]
       }
-    ])
-    nextId.current +=1;
-    setInputs({
-      username:'',
-      email:''
-    })
-    
-    firstFocus.current.focus()
+    case 'REMOVE_USER':
+      return{
+        ...state,
+        users: state.users.filter(user => user.id !== action.userId)
+      }
+    case 'TOGGLE_USER':
+      return{
+        ...state,
+        users: state.users.map(user => (user.id===action.userId)?{...user, active:!user.active}:user)
+      }
+      default:
+        return state;
   }
 
+}
+
+export const UserDispatch = React.createContext(null)
+
+
+function App(){
+
+  const [state, dispatch] = useReducer(reducer, initialState);
+  
+  const { users } = state
+  const {username, email} = state.inputs
+
+  const nextId = useRef(4)
+
+  const onChange = (e) =>{
+    const {name, value} = e.target //name, value 비구조화 할당
+    dispatch({
+      type:'CHANGE_INPUT',
+      name,
+      value
+    })
+  }
+
+  const onCreate = () =>{
+    dispatch({
+      type:'CREATE_USER',
+      username,
+      email,
+      nextId : nextId.current
+    })
+    nextId.current += 1
+  }
+
+  const count = countActiveUsers(users)
+  // const count = useMemo(()=>{countActiveUsers(users)}, [users]) // useMemo에 집어넣으면 문제가 생긴다.. 왜그럴까..?
+  console.log(count)
   return(
-    <>
-    <CreateUser username={username} email={email} onChange={onChange} onCreate={onCreate} firstFocus={firstFocus} />
-    <UserList users={users}/>
-    </>
+    
+    <UserDispatch.Provider value={dispatch}>
+      <CreateUser username={username} email={email} onChange={onChange} onCreate={onCreate}  />
+      <UserList users={users} />
+      <div>활성사용자 수 : {count}</div>
+    </UserDispatch.Provider>
   )
 }export default App;
